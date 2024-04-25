@@ -56,7 +56,6 @@ function authenticateAndAuthorize(req, res, next) {
     }
 }
 
-
 // Criação da tabela de produtos (se não existir)
 db.serialize(() => {
     db.run(`
@@ -248,7 +247,6 @@ app.post('/salvar_produto', (req, res) => {
         res.redirect('/cadastro_produto.html?status=sucesso');
     });
 });
-
 
 // Rota para continuar o cadastro com dados preenchidos
 app.get('/continuar_cadastro', (req, res) => {
@@ -650,7 +648,6 @@ app.get('/alterar_usuario', (req, res) => {
 app.get('/cadastro_produto', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'cadastro_produto.html'));
 });
-
 
 // Rota para servir o arquivo procedimento.html
 app.get('/procedimento.html', (req, res) => {
