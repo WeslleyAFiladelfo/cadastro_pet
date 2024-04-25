@@ -9,7 +9,7 @@ const { name } = require('ejs');
 const LocalStrategy = require('passport-local').Strategy;
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Configuração da sessão com variável de ambiente
 const secretKey = process.env.SESSION_SECRET || 'sua_chave_secreta_aqui';
@@ -25,6 +25,18 @@ app.use(express.urlencoded({ extended: true }));
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+// Rotas e lógica de negócios...
+
+db.on('open', () => {
+    app.listen(port, () => {
+        console.log(`Servidor rodando em http://localhost:${port}`);
+    });
+});
+
+db.on('error', (err) => {
+    console.error('Erro ao conectar ao banco de dados:', err.message);
+});
 
 // Configuração do diretório de arquivos estáticos (CSS, imagens, HTML, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -670,18 +682,14 @@ function generateRandomCode() {
     return Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
 }
 
-// Iniciar o servidor
-app.listen(port, () => {
-    console.log(`Servidor rodando em http://localhost:${port}`);
+// Inicializar o servidor após a conexão com o banco de dados
+db.on('open', () => {
+    app.listen(port, () => {
+        console.log(`Servidor rodando em http://localhost:${port}`);
+    });
 });
 
-// Fechar o banco de dados ao finalizar o servidor
-process.on('exit', () => {
-    db.close((err) => {
-        if (err) {
-            console.error('Erro ao fechar conexão com o banco de dados:', err.message);
-        } else {
-            console.log('Conexão com o banco de dados fechada.');
-        }
-    });
+// Tratar erros ao conectar ao banco de dados
+db.on('error', (err) => {
+    console.error('Erro ao conectar ao banco de dados:', err.message);
 });
