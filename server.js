@@ -445,7 +445,7 @@ app.get('/get_setores', (req, res) => {
 });
 
 // Rota para processar o formulário de login
-app.post('/login', (req, res) => {
+app.post('/index', (req, res) => {
     const { username, email } = req.body;
 
     // Consultar o banco de dados para encontrar o usuário
@@ -614,7 +614,7 @@ app.get('/cadastroSetor.js', (req, res) => {
 
 // Rota para servir a página de login (login.html)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Rota para servir a página de menu (menu.html)
