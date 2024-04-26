@@ -3,7 +3,7 @@ const path = require('path');
 const session = require('express-session');
 const { body, validationResult } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const sqlite3 = require('sqlite3').verbose();
+const { Client } = require('pg');
 const { sendNotificationEmail } = require('./emailSender');
 const { name } = require('ejs');
 const LocalStrategy = require('passport-local').Strategy;
@@ -32,14 +32,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Caminho para o arquivo do banco de dados SQLite
 const dbPath = path.join(__dirname, 'views', 'database.sqlite');
 
-// Configuração do banco de dados SQLite
-const db = new sqlite3.Database('database.sqlite', (err) => {
-    if (err) {
-        console.error('Erro ao conectar ao banco de dados:', err.message);
-    } else {
-        console.log('Conexão com o banco de dados estabelecida.');
+// Configuração da conexão com o banco de dados PostgreSQL
+const client = new Client({
+    user: "default",
+    host: "ep-cold-dew-a4ugyq8r-pooler.us-east-1.aws.neon.tech",
+    database: "verceldb",
+    password: "3nFi5pwbEHgI",
+    port: 5432,
+    ssl: {
+        rejectUnauthorized: false // Necessário quando SSL está habilitado
     }
 });
+
+// Conectar ao PostgreSQL
+client.connect()
+    .then(() => console.log('Conexão com o banco de dados PostgreSQL estabelecida.'))
+    .catch(err => console.error('Erro ao conectar ao banco de dados PostgreSQL:', err));
+
 
 // Middleware para verificar autenticação
 function isAuthenticated(req, res, next) {
