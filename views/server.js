@@ -440,14 +440,15 @@ app.post('/finalizar_cadastro_produto', (req, res) => {
 
 // Rota para obter todos os setores cadastrados
 app.get('/get_setores', (req, res) => {
-    db.all('SELECT * FROM setores', (err, rows) => {
+    client.query('SELECT * FROM setores', (err, result) => {
         if (err) {
             console.error('Erro ao obter setores:', err);
             return res.status(500).send('Erro ao obter setores');
         }
-        res.status(200).json(rows);
+        res.status(200).json(result.rows);
     });
 });
+
 
 // Rota para servir a página de login (index.html)
 app.get('/', (req, res) => {
@@ -528,14 +529,19 @@ app.post('/salvar_usuario', (req, res) => {
     }
 
     // Inserir novo usuário no banco de dados
-    const sql = 'INSERT INTO users (name, email, username, setor_id) VALUES (?, ?, ?, ?)';
-    db.run(sql, [name, email, username, setor_id], function(err) {
-        if (err) {
-            console.error('Erro ao cadastrar usuário:', err);
-            return res.status(500).send('Erro ao cadastrar usuário');
-        }
-        res.status(200).json({ message: 'Usuário cadastrado com sucesso!' });
-    });
+    const sql = 'INSERT INTO users (name, email, username, setor_id) VALUES ($1, $2, $3, $4)';
+    const values = [name, email, username, setor_id];
+
+    // Executar a consulta SQL de inserção
+    client.query(sql, values)
+        .then(() => {
+            console.log('Usuário cadastrado com sucesso.');
+            res.status(200).json({ message: 'Usuário cadastrado com sucesso!' });
+        })
+        .catch(error => {
+            console.error('Erro ao cadastrar usuário:', error);
+            res.status(500).send('Erro ao cadastrar usuário');
+        });
 });
 
 // Criar a tabela de solicitações (caso não exista)
@@ -604,15 +610,21 @@ app.post('/salvar_setor', (req, res) => {
     }
 
     // Inserir o novo setor no banco de dados
-    const sql = 'INSERT INTO setores (nome, responsavel) VALUES (?, ?)';
-    db.run(sql, [nome, responsavel], function(err) {
-        if (err) {
-            console.error('Erro ao cadastrar setor:', err);
-            return res.status(500).send('Erro ao cadastrar setor');
-        }
-        res.status(200).send('Setor cadastrado com sucesso!');
-    });
+    const sql = 'INSERT INTO setores (nome, responsavel) VALUES ($1, $2)';
+    const values = [nome, responsavel];
+
+    // Executar a consulta SQL de inserção
+    client.query(sql, values)
+        .then(() => {
+            console.log('Setor cadastrado com sucesso.');
+            res.status(200).send('Setor cadastrado com sucesso!');
+        })
+        .catch(error => {
+            console.error('Erro ao cadastrar setor:', error);
+            res.status(500).send('Erro ao cadastrar setor');
+        });
 });
+
 
  // Rota para servir o arquivo JavaScript (cadastroSetor.js)
 app.get('/cadastroSetor.js', (req, res) => {

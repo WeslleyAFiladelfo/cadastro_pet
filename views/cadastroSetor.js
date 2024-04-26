@@ -31,7 +31,7 @@ function salvarSetor() {
         if (!response.ok) {
             throw new Error('Erro ao cadastrar setor');
         }
-        return response.text(); // Espera uma resposta de texto do servidor
+        return response.json(); // Espera uma resposta JSON do servidor
     })
     .then(result => {
         console.log('Resposta do servidor:', result);
@@ -43,6 +43,7 @@ function salvarSetor() {
         alert('Erro ao cadastrar setor. Por favor, tente novamente.');
     });
 }
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
