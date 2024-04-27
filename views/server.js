@@ -1,12 +1,9 @@
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
-const { body, validationResult } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const { Client } = require('pg');
+const { Pool } = require('pg');
 const { sendNotificationEmail } = require('./emailSender');
-const { name } = require('ejs');
-const LocalStrategy = require('passport-local').Strategy;
 
 const app = express();
 const port = 3000;
@@ -29,11 +26,8 @@ app.set('view engine', 'ejs');
 // Configuração do diretório de arquivos estáticos (CSS, imagens, HTML, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Caminho para o arquivo do banco de dados SQLite
-const dbPath = path.join(__dirname, 'views', 'database.sqlite');
-
 // Configuração da conexão com o banco de dados PostgreSQL
-const client = new Client({
+const pool = new Pool({
     user: "default",
     host: "ep-cold-dew-a4ugyq8r-pooler.us-east-1.aws.neon.tech",
     database: "verceldb",
@@ -45,10 +39,9 @@ const client = new Client({
 });
 
 // Conectar ao PostgreSQL
-client.connect()
+pool.connect()
     .then(() => console.log('Conexão com o banco de dados PostgreSQL estabelecida.'))
     .catch(err => console.error('Erro ao conectar ao banco de dados PostgreSQL:', err));
-
 
 // Middleware para verificar autenticação
 function isAuthenticated(req, res, next) {
@@ -62,43 +55,39 @@ function isAuthenticated(req, res, next) {
 }
 
 // Criação da tabela de produtos (se não existir)
-db.serialize(() => {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS produtos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            codigo TEXT,
-            descricao TEXT NOT NULL,
-            desc_resumida TEXT NOT NULL,
-            kit TEXT,
-            consignado TEXT,
-            opme TEXT,
-            especie TEXT,
-            classe TEXT,
-            sub_classe TEXT,
-            curva_abc TEXT,
-            lote TEXT,
-            serie TEXT,
-            registro_anvisa TEXT,
-            etiqueta TEXT,
-            medicamento TEXT,
-            carater TEXT,
-            atividade TEXT,
-            procedimento_faturamento TEXT,
-            token TEXT,
-            auto_custo TEXT,
-            aplicacao TEXT,
-            valor REAL,
-            repasse TEXT,
-            tipo_atendimento TEXT,
-            observacao TEXT
-        )
-    `, (err) => {
-        if (err) {
-            console.error('Erro ao criar/verificar a tabela de produtos:', err);
-        } else {
-            console.log('Tabela de produtos verificada/atualizada com sucesso.');
-        }
-    });
+pool.query(`
+    CREATE TABLE IF NOT EXISTS produtos (
+        id SERIAL PRIMARY KEY,
+        codigo TEXT,
+        descricao TEXT NOT NULL,
+        desc_resumida TEXT NOT NULL,
+        kit TEXT,
+        consignado TEXT,
+        opme TEXT,
+        especie TEXT,
+        classe TEXT,
+        sub_classe TEXT,
+        curva_abc TEXT,
+        lote TEXT,
+        serie TEXT,
+        registro_anvisa TEXT,
+        etiqueta TEXT,
+        medicamento TEXT,
+        carater TEXT,
+        atividade TEXT,
+        procedimento_faturamento TEXT,
+        token TEXT,
+        auto_custo TEXT,
+        aplicacao TEXT,
+        valor REAL,
+        repasse TEXT,
+        tipo_atendimento JSONB,
+        observacao TEXT
+    )
+`).then(() => {
+    console.log('Tabela de produtos verificada/atualizada com sucesso.');
+}).catch(err => {
+    console.error('Erro ao criar/verificar a tabela de produtos:', err);
 });
 
 // Rota para salvar um produto (sem autenticação)
@@ -133,41 +122,6 @@ app.post('/salvar_produto', (req, res) => {
     // Gerar um token único para o produto
     const token = uuidv4();
 
-    // Preparar os dados do produto para inserção
-    const produtoData = {
-        codigo,
-        descricao,
-        desc_resumida,
-        kit,
-        consignado,
-        opme,
-        especie,
-        classe,
-        sub_classe,
-        curva_abc,
-        lote,
-        serie,
-        registro_anvisa,
-        etiqueta,
-        medicamento,
-        carater,
-        atividade,
-        procedimento_faturamento,
-        auto_custo,
-        aplicacao,
-        valor,
-        repasse,
-        tipo_atendimento: {  // Tratar os campos de tipo de atendimento como objeto booleano
-            ps: tipo_atendimento === 'ps',  // Converter para booleano
-            ambulatorio: tipo_atendimento === 'ambulatorio',
-            externo: tipo_atendimento === 'externo',
-            internacao: tipo_atendimento === 'internacao',
-            todos: tipo_atendimento === 'todos'
-        },
-        observacao,
-        token
-    };
-
     // Montar a consulta SQL com placeholders para os valores
     const sql = `
         INSERT INTO produtos (
@@ -196,45 +150,41 @@ app.post('/salvar_produto', (req, res) => {
             repasse,
             tipo_atendimento,
             observacao
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
     `;
 
-    // Extrair os valores do objeto produtoData na ordem correta
-    const params = [
-        produtoData.codigo,
-        produtoData.descricao,
-        produtoData.desc_resumida,
-        produtoData.kit,
-        produtoData.consignado,
-        produtoData.opme,
-        produtoData.especie,
-        produtoData.classe,
-        produtoData.sub_classe,
-        produtoData.curva_abc,
-        produtoData.lote,
-        produtoData.serie,
-        produtoData.registro_anvisa,
-        produtoData.etiqueta,
-        produtoData.medicamento,
-        produtoData.carater,
-        produtoData.atividade,
-        produtoData.procedimento_faturamento,
-        produtoData.token,
-        produtoData.auto_custo,
-        produtoData.aplicacao,
-        produtoData.valor,
-        produtoData.repasse,
-        JSON.stringify(produtoData.tipo_atendimento),  // Converter o objeto para JSON
-        produtoData.observacao
-    ];
-
     // Executar a consulta SQL com os parâmetros
-    db.run(sql, params, function(err) {
+    pool.query(sql, [
+        codigo,
+        descricao,
+        desc_resumida,
+        kit,
+        consignado,
+        opme,
+        especie,
+        classe,
+        sub_classe,
+        curva_abc,
+        lote,
+        serie,
+        registro_anvisa,
+        etiqueta,
+        medicamento,
+        carater,
+        atividade,
+        procedimento_faturamento,
+        token,
+        auto_custo,
+        aplicacao,
+        valor,
+        repasse,
+        JSON.stringify(tipo_atendimento),  // Converter o objeto para JSON
+        observacao
+    ], (err, result) => {
         if (err) {
             console.error('Erro ao cadastrar produto:', err);
             return res.redirect('/cadastro_produto.html?status=erro');
         }
-
 
         // Enviar e-mail de notificação com link para continuar o cadastro
         const continuationLink = `http://localhost:3000/continuar_cadastro?token=${token}&codigo=${codigo}&descricao=${descricao}&desc_resumida=${desc_resumida}&observacao=${observacao}`;
@@ -545,23 +495,22 @@ app.post('/salvar_usuario', (req, res) => {
 });
 
 // Criar a tabela de solicitações (caso não exista)
-db.serialize(() => {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS solicitacoes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario TEXT,
-            descricao TEXT,
-            data_solicitacao DATETIME DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'Pendente'
-        )
-    `, (err) => {
-        if (err) {
-            console.error('Erro ao criar tabela de solicitações:', err.message);
-        } else {
-            console.log('Tabela de solicitações criada com sucesso.');
-        }
-    });
+pool.query(`
+    CREATE TABLE IF NOT EXISTS solicitacoes (
+        id SERIAL PRIMARY KEY,
+        usuario TEXT,
+        descricao TEXT,
+        data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'Pendente'
+    )
+`, (err, result) => {
+    if (err) {
+        console.error('Erro ao criar tabela de solicitações:', err.message);
+    } else {
+        console.log('Tabela de solicitações criada com sucesso.');
+    }
 });
+
 
 // Rota para processar solicitação de cadastro de produto
 app.post('/solicitar_cadastro_produto', (req, res) => {

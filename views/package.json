@@ -1,10 +1,10 @@
 {
-  "name": "cadastro-pet",
+  "name": "cadastro-veros",
   "version": "1.0.0",
-  "description": "Sistema com front-end em HTML, CSS, JavaScript e back-end em Node.js com SQLite",
+  "description": "Sistema com front-end em HTML, CSS, JavaScript e back-end em Node.js com PostgreSQL",
   "main": "server.js",
   "scripts": {
-    "start": "npm run compile && node server.js",
+    "start": "node server.js",
     "dev": "nodemon server.js",
     "compile": "sass src/styles/main.scss public/css/main.css"
   },
@@ -17,7 +17,7 @@
     "express-validator": "^6.15.0",
     "nodemailer": "^6.9.13",
     "passport-local": "^1.0.0",
-    "sqlite3": "^5.0.2",
+    "pg": "^8.11.5", 
     "uuid": "^9.0.1"
   },
   "devDependencies": {
