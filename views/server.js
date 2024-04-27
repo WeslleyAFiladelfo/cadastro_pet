@@ -578,8 +578,7 @@ app.post('/salvar_setor', (req, res) => {
 app.get('/cadastroSetor.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.sendFile(path.join(__dirname, 'views', 'cadastroSetor.js'));
-});
-
+})
 
 
 // Rota para servir o arquivo usuario.html

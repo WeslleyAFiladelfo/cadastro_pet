@@ -44,28 +44,34 @@ function salvarSetor() {
     });
 }
 
+function carregarSolicitacoes() {
+    // Requisição AJAX para obter as solicitações do servidor
+    fetch('/listar_solicitacoes')
+        .then(response => response.json())
+        .then(data => {
+            const setorSelect = document.getElementById('setor');
+
+            // Limpar opções existentes
+            setorSelect.innerHTML = '';
+
+            // Adicionar opções de solicitação ao menu suspenso
+            data.forEach(solicitacao => {
+                const option = document.createElement('option');
+                option.value = solicitacao.id;
+                option.textContent = solicitacao.descricao;
+                setorSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao carregar solicitações:', error);
+        });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const setorSelect = document.getElementById('setor');
 
     if (setorSelect) {
-        // Requisição AJAX para obter as solicitações do servidor
-        fetch('/listar_solicitacoes')
-            .then(response => response.json())
-            .then(data => {
-                // Limpar opções existentes
-                setorSelect.innerHTML = '';
-
-                // Adicionar opções de setor ao menu suspenso
-                data.forEach(solicitacao => {
-                    const option = document.createElement('option');
-                    option.value = solicitacao.id;
-                    option.textContent = solicitacao.descricao;
-                    setorSelect.appendChild(option);
-                });
-            })
-            .catch(error => {
-                console.error('Erro ao carregar solicitações:', error);
-            });
+        carregarSolicitacoes();
     } else {
         console.error('Elemento com ID "setor" não encontrado na página.');
     }
