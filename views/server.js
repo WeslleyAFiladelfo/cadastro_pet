@@ -577,7 +577,7 @@ app.post('/salvar_setor', (req, res) => {
 // Rota para servir o arquivo JavaScript (cadastroSetor.js)
 app.get('/cadastroSetor.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(path.join(__dirname, 'public', 'cadastroSetor.js'));
+    res.sendFile(path.join(__dirname, 'views', 'cadastroSetor.js'));
 });
 
 
