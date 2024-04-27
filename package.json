@@ -2,5 +2,8 @@
   "dependencies": {
     "@vercel/postgres": "^0.8.0",
     "pg": "^8.11.5"
+  },
+  "scripts": {
+    "start": "node server.js"
   }
 }
