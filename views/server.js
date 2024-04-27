@@ -519,10 +519,10 @@ app.post('/solicitar_cadastro_produto', (req, res) => {
     // Salvar a solicitação no banco de dados
     const sql = `
         INSERT INTO solicitacoes (usuario, descricao)
-        VALUES (?, ?)
+        VALUES ($1, $2)
     `;
 
-    db.run(sql, [usuario, descricao], (err) => {
+    pool.query(sql, [usuario, descricao], (err) => {
         if (err) {
             console.error('Erro ao salvar solicitação no banco de dados:', err.message);
             res.status(500).send('Erro ao salvar solicitação no banco de dados.');
@@ -539,12 +539,12 @@ app.get('/listar_solicitacoes', (req, res) => {
         SELECT * FROM solicitacoes
     `;
 
-    db.all(sql, [], (err, rows) => {
+    pool.query(sql, (err, result) => {
         if (err) {
             console.error('Erro ao listar solicitações:', err.message);
             res.status(500).send('Erro ao listar solicitações.');
         } else {
-            res.status(200).json(rows);
+            res.status(200).json(result.rows);
         }
     });
 });
@@ -563,7 +563,7 @@ app.post('/salvar_setor', (req, res) => {
     const values = [nome, responsavel];
 
     // Executar a consulta SQL de inserção
-    client.query(sql, values)
+    pool.query(sql, values)
         .then(() => {
             console.log('Setor cadastrado com sucesso.');
             res.status(200).send('Setor cadastrado com sucesso!');
@@ -574,12 +574,12 @@ app.post('/salvar_setor', (req, res) => {
         });
 });
 
-
- // Rota para servir o arquivo JavaScript (cadastroSetor.js)
+// Rota para servir o arquivo JavaScript (cadastroSetor.js)
 app.get('/cadastroSetor.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.sendFile(path.join(__dirname, 'public', 'cadastroSetor.js'));
 });
+
 
 
 // Rota para servir o arquivo usuario.html

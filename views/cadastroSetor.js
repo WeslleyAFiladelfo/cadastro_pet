@@ -44,32 +44,29 @@ function salvarSetor() {
     });
 }
 
-
-
 document.addEventListener('DOMContentLoaded', () => {
     const setorSelect = document.getElementById('setor');
 
     if (setorSelect) {
-        // Requisição AJAX para obter os setores do servidor
-        fetch('/get_setores')
+        // Requisição AJAX para obter as solicitações do servidor
+        fetch('/listar_solicitacoes')
             .then(response => response.json())
             .then(data => {
                 // Limpar opções existentes
                 setorSelect.innerHTML = '';
 
                 // Adicionar opções de setor ao menu suspenso
-                data.forEach(setor => {
+                data.forEach(solicitacao => {
                     const option = document.createElement('option');
-                    option.value = setor.id;
-                    option.textContent = setor.nome;
+                    option.value = solicitacao.id;
+                    option.textContent = solicitacao.descricao;
                     setorSelect.appendChild(option);
                 });
             })
             .catch(error => {
-                console.error('Erro ao carregar setores:', error);
+                console.error('Erro ao carregar solicitações:', error);
             });
     } else {
         console.error('Elemento com ID "setor" não encontrado na página.');
     }
 });
-
