@@ -8,6 +8,10 @@ const { sendNotificationEmail } = require('./emailSender');
 const app = express();
 const port = 3000;
 
+app.set('view engine', 'ejs'); // Definir o mecanismo de visualização como EJS
+app.set('views', path.join(__dirname, 'views')); // Definir o diretório de visualizações
+
+
 // Configuração da sessão com variável de ambiente
 const secretKey = process.env.SESSION_SECRET || 'sua_chave_secreta_aqui';
 app.use(session({
@@ -19,12 +23,6 @@ app.use(session({
 // Middleware para tratar JSON e URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-
-// Configuração do diretório de arquivos estáticos (CSS, imagens, HTML, etc.)
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuração da conexão com o banco de dados PostgreSQL
 const pool = new Pool({
@@ -226,7 +224,7 @@ app.get('/continuar_cadastro', (req, res) => {
             return res.status(404).send('Produto pendente não encontrado');
         }
 
-          // Reconstruir o objeto tipo_atendimento
+        // Reconstruir o objeto tipo_atendimento
         const tipoAtendimento = JSON.parse(row.tipo_atendimento);
 
         // Renderizar a página 'continuar_cadastro.ejs' com os dados preenchidos
@@ -255,7 +253,7 @@ app.get('/continuar_cadastro', (req, res) => {
             valor: row.valor,
             repasse: row.repasse,
             tipo_atendimento: tipoAtendimento, // Passar o objeto reconstruído
-            observacao: row.observacao 
+            observacao: row.observacao
         });
     });
 });
@@ -400,9 +398,9 @@ app.get('/get_setores', (req, res) => {
 });
 
 
-// Rota para servir a página de login (index.html)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+// Rota para lidar com outras solicitações
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Rota para processar o formulário de login
@@ -519,10 +517,10 @@ app.post('/solicitar_cadastro_produto', (req, res) => {
     // Salvar a solicitação no banco de dados
     const sql = `
         INSERT INTO solicitacoes (usuario, descricao)
-        VALUES (?, ?)
+        VALUES ($1, $2)
     `;
 
-    db.run(sql, [usuario, descricao], (err) => {
+    pool.query(sql, [usuario, descricao], (err) => {
         if (err) {
             console.error('Erro ao salvar solicitação no banco de dados:', err.message);
             res.status(500).send('Erro ao salvar solicitação no banco de dados.');
@@ -539,12 +537,12 @@ app.get('/listar_solicitacoes', (req, res) => {
         SELECT * FROM solicitacoes
     `;
 
-    db.all(sql, [], (err, rows) => {
+    pool.query(sql, (err, result) => {
         if (err) {
             console.error('Erro ao listar solicitações:', err.message);
             res.status(500).send('Erro ao listar solicitações.');
         } else {
-            res.status(200).json(rows);
+            res.status(200).json(result.rows);
         }
     });
 });
@@ -563,7 +561,7 @@ app.post('/salvar_setor', (req, res) => {
     const values = [nome, responsavel];
 
     // Executar a consulta SQL de inserção
-    client.query(sql, values)
+    pool.query(sql, values)
         .then(() => {
             console.log('Setor cadastrado com sucesso.');
             res.status(200).send('Setor cadastrado com sucesso!');
@@ -574,12 +572,11 @@ app.post('/salvar_setor', (req, res) => {
         });
 });
 
-
- // Rota para servir o arquivo JavaScript (cadastroSetor.js)
+// Rota para servir o arquivo JavaScript (cadastroSetor.js)
 app.get('/cadastroSetor.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(path.join(__dirname, 'public', 'cadastroSetor.js'));
-});
+    res.sendFile(path.join(__dirname, 'views', 'cadastroSetor.js'));
+})
 
 
 // Rota para servir o arquivo usuario.html

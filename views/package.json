@@ -1,5 +1,5 @@
 {
-  "name": "cadastro-veros",
+  "name": "cadastro-veros-pet",
   "version": "1.0.0",
   "description": "Sistema com front-end em HTML, CSS, JavaScript e back-end em Node.js com PostgreSQL",
   "main": "server.js",
